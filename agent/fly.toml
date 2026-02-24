@@ -1,19 +1,23 @@
-# AI-generated: Claude Code (claude.ai/code) — Fly.io deployment config
-app = "openemr-agent"
-primary_region = "ord"
+# fly.toml app configuration file generated for openemr-agent on 2026-02-24T10:06:04-05:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'openemr-agent'
+primary_region = 'ord'
 
 [build]
-  dockerfile = "Dockerfile"
+  dockerfile = 'Dockerfile'
 
 [http_service]
   internal_port = 8080
   force_https = true
-  auto_stop_machines = "stop"
+  auto_stop_machines = 'stop'
   auto_start_machines = true
   min_machines_running = 0
 
 [[vm]]
-  memory = "512mb"
-  cpu_kind = "shared"
+  memory = '512mb'
+  cpu_kind = 'shared'
   cpus = 1
-# end AI-generated
+  memory_mb = 512
