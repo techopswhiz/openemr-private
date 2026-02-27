@@ -34,8 +34,7 @@ async def index():
 @app.post("/chat", response_model=ChatResponse)
 async def chat(req: ChatRequest):
     try:
-        patient_context = req.patient_context.model_dump() if req.patient_context else None
-        result = await run_agent(req.message, req.session_id, patient_context=patient_context)
+        result = await run_agent(req.message, req.session_id)
         return ChatResponse(**result)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -2,17 +2,9 @@
 from pydantic import BaseModel
 
 
-class PatientContext(BaseModel):
-    pid: str | None = None
-    pname: str | None = None
-    pubpid: str | None = None
-    str_dob: str | None = None
-
-
 class ChatRequest(BaseModel):
     message: str
     session_id: str = "default"
-    patient_context: PatientContext | None = None
 
 
 class ChatResponse(BaseModel):

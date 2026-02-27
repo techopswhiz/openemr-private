@@ -106,21 +106,10 @@ def build_graph() -> StateGraph:
 agent_graph = build_graph()
 
 
-async def run_agent(message: str, session_id: str = "default", patient_context: dict | None = None) -> dict:
+async def run_agent(message: str, session_id: str = "default") -> dict:
     """Run the agent with conversation history."""
     history = get_history(session_id)
-    system_prompt = SYSTEM_PROMPT
-    if patient_context and patient_context.get("pid"):
-        system_prompt += (
-            f"\n\nCURRENT PATIENT CONTEXT (from EHR):\n"
-            f"- PID: {patient_context['pid']}\n"
-            f"- Name: {patient_context.get('pname', 'Unknown')}\n"
-            f"- Public ID: {patient_context.get('pubpid', '')}\n"
-            f"- DOB: {patient_context.get('str_dob', '')}\n"
-            f"When the user asks about 'this patient' or 'the patient', use PID {patient_context['pid']}. "
-            f"Skip the patient lookup tool and go directly to medication/interaction queries."
-        )
-    messages = [SystemMessage(content=system_prompt)] + history + [HumanMessage(content=message)]
+    messages = [SystemMessage(content=SYSTEM_PROMPT)] + history + [HumanMessage(content=message)]
 
     result = await agent_graph.ainvoke({
         "messages": messages,
