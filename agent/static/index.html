@@ -51,7 +51,8 @@ const sessionId = crypto.randomUUID();
 
 inputEl.addEventListener('keydown', e => { if (e.key === 'Enter' && !sendBtn.disabled) send(); });
 
-fetch('/health').then(r => r.json()).then(d => {
+const base = document.querySelector('base')?.href || window.location.pathname.replace(/\/$/, '');
+fetch(base + '/health').then(r => r.json()).then(d => {
   document.getElementById('mode-badge').textContent = d.demo_mode ? 'DEMO MODE' : 'LIVE';
   document.getElementById('mode-badge').style.background = d.demo_mode ? '#f39c12' : '#2ecc71';
 });
@@ -90,7 +91,7 @@ async function send() {
   chatEl.scrollTop = chatEl.scrollHeight;
 
   try {
-    const res = await fetch('/chat', {
+    const res = await fetch(base + '/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message: text, session_id: sessionId }),

@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     # App
     host: str = "0.0.0.0"
     port: int = 8080
+    root_path: str = ""
 
     @property
     def demo_mode(self) -> bool:

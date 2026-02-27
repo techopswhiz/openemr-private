@@ -13,6 +13,7 @@ app = FastAPI(
     title="OpenEMR Clinical Agent",
     description="Healthcare AI agent with drug interaction checking, patient lookup, and medication management",
     version="0.1.0",
+    root_path=settings.root_path,
 )
 
 app.add_middleware(
