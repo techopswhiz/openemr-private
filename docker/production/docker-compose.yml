@@ -2,6 +2,12 @@
 # MYSQL_HOST and MYSQL_ROOT_PASS are required for openemr
 # MYSQL_USER, MYSQL_PASS, OE_USER, OE_PASS are optional for openemr and
 #   if not provided, then default to openemr, openemr, admin, and pass respectively.
+#
+# Agent setup (after first boot):
+#   1. Log in to OpenEMR at http://localhost (admin/pass)
+#   2. Go to Admin > System > API Clients to register an OAuth2 client
+#   3. Copy client_id and client_secret into your .env file
+#   4. Run: docker compose restart agent
 services:
   mysql:
     restart: always
@@ -39,6 +45,9 @@ services:
       MYSQL_PASS: openemr
       OE_USER: admin
       OE_PASS: pass
+      OPENEMR_SETTING_rest_api: 1
+      OPENEMR_SETTING_rest_fhir_api: 1
+      OPENEMR_SETTING_oauth_password_grant: 3
     depends_on:
       mysql:
         condition: service_healthy
@@ -57,6 +66,23 @@ services:
       interval: 1m
       timeout: 5s
       retries: 3
+  agent:
+    restart: always
+    build:
+      context: ../../agent
+      dockerfile: Dockerfile
+    ports:
+    - 8080:8080
+    environment:
+      OPENEMR_BASE_URL: http://openemr
+      OPENEMR_CLIENT_ID: ${OPENEMR_CLIENT_ID:-}
+      OPENEMR_CLIENT_SECRET: ${OPENEMR_CLIENT_SECRET:-}
+      OPENEMR_USERNAME: ${OPENEMR_USERNAME:-admin}
+      OPENEMR_PASSWORD: ${OPENEMR_PASSWORD:-pass}
+      XAI_API_KEY: ${XAI_API_KEY:-}
+    depends_on:
+      openemr:
+        condition: service_healthy
 volumes:
   logvolume01: {}
   sitevolume: {}
