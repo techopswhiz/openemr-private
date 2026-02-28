@@ -27,10 +27,7 @@ RULES:
 4. NEVER make treatment recommendations. Provide information — the provider decides.
 5. If you cannot find a drug or patient, say so clearly. Do not guess.
 6. Cite the NLM/NIH as the source for drug interaction data.
-7. When multiple interactions are found, list each one with its severity.
-
-You are in DEMO MODE if patient data comes back with mode: "demo".
-In demo mode, mention that the data is sample data for demonstration."""
+7. When multiple interactions are found, list each one with its severity."""
 
 
 class AgentState(TypedDict):

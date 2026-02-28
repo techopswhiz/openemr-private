@@ -1,0 +1,24 @@
+# Golden set: patient_allergy_list tool
+tool: patient_allergy_list
+
+cases:
+  - id: allergies_returns_structure
+    description: Valid patient returns expected response shape
+    args:
+      patient_uuid: "__FIRST_PATIENT_UUID__"
+    must_contain_keys: [allergies, patient_uuid]
+    field_types:
+      allergies: list
+      patient_uuid: str
+    result_list_field: allergies
+    item_must_contain_keys: [title]
+    must_not_error: true
+
+  - id: allergies_invalid_uuid
+    description: Invalid UUID returns empty list, no crash
+    args:
+      patient_uuid: "00000000-0000-0000-0000-000000000000"
+    must_contain_keys: [allergies, patient_uuid]
+    field_types:
+      allergies: list
+    must_not_error: true

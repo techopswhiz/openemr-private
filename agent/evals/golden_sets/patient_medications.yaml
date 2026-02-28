@@ -1,0 +1,25 @@
+# Golden set: patient_medication_list tool
+tool: patient_medication_list
+
+cases:
+  - id: meds_returns_structure
+    description: Valid patient returns expected response shape
+    args:
+      patient_uuid: "__FIRST_PATIENT_UUID__"
+    must_contain_keys: [medications, active_count]
+    field_types:
+      medications: list
+      active_count: int
+    result_list_field: medications
+    item_must_contain_keys: [drug]
+    must_not_error: true
+
+  - id: meds_invalid_uuid
+    description: Invalid UUID returns empty list, no crash
+    args:
+      patient_uuid: "00000000-0000-0000-0000-000000000000"
+    must_contain_keys: [medications, active_count]
+    field_types:
+      medications: list
+      active_count: int
+    must_not_error: true

@@ -1,0 +1,24 @@
+# Golden set: patient_vitals tool
+tool: patient_vitals
+
+cases:
+  - id: vitals_returns_structure
+    description: Valid patient returns expected response shape
+    args:
+      patient_uuid: "__FIRST_PATIENT_UUID__"
+    must_contain_keys: [vitals, patient_uuid]
+    field_types:
+      vitals: list
+      patient_uuid: str
+    result_list_field: vitals
+    item_must_contain_keys: [bps, bpd, temperature]
+    must_not_error: true
+
+  - id: vitals_invalid_uuid
+    description: Invalid UUID returns empty list, no crash
+    args:
+      patient_uuid: "00000000-0000-0000-0000-000000000000"
+    must_contain_keys: [vitals, patient_uuid]
+    field_types:
+      vitals: list
+    must_not_error: true

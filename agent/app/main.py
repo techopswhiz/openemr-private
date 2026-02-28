@@ -50,7 +50,6 @@ async def clear_session(session_id: str):
 async def health():
     return {
         "status": "ok",
-        "demo_mode": settings.demo_mode,
         "model": settings.xai_model,
     }
 

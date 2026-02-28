@@ -1,0 +1,24 @@
+# Golden set: patient_problem_list tool
+tool: patient_problem_list
+
+cases:
+  - id: problems_returns_structure
+    description: Valid patient returns expected response shape
+    args:
+      patient_uuid: "__FIRST_PATIENT_UUID__"
+    must_contain_keys: [problems, patient_uuid]
+    field_types:
+      problems: list
+      patient_uuid: str
+    result_list_field: problems
+    item_must_contain_keys: [title]
+    must_not_error: true
+
+  - id: problems_invalid_uuid
+    description: Invalid UUID returns empty list, no crash
+    args:
+      patient_uuid: "00000000-0000-0000-0000-000000000000"
+    must_contain_keys: [problems, patient_uuid]
+    field_types:
+      problems: list
+    must_not_error: true

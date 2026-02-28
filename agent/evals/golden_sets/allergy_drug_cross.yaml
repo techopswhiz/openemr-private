@@ -1,0 +1,29 @@
+# Golden set: allergy_drug_cross_check tool
+tool: allergy_drug_cross_check
+
+cases:
+  - id: cross_check_returns_structure
+    description: Valid patient + drug returns expected response shape
+    args:
+      patient_uuid: "__FIRST_PATIENT_UUID__"
+      proposed_drug: "amoxicillin"
+    must_contain_keys: [has_conflict, conflicts, checked_drug]
+    field_types:
+      has_conflict: bool
+      conflicts: list
+      checked_drug: str
+    must_not_error: true
+
+  - id: cross_check_invalid_uuid
+    description: Invalid UUID returns no conflict, no crash
+    args:
+      patient_uuid: "00000000-0000-0000-0000-000000000000"
+      proposed_drug: "amoxicillin"
+    must_contain_keys: [has_conflict, conflicts, checked_drug]
+    field_types:
+      has_conflict: bool
+      conflicts: list
+    expect_field_value:
+      has_conflict: false
+    expect_empty_list_field: conflicts
+    must_not_error: true

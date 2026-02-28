@@ -1,0 +1,26 @@
+# Golden set: patient_lookup tool
+tool: patient_lookup
+
+cases:
+  - id: lookup_returns_structure
+    description: Broad search returns expected response shape
+    args:
+      search_term: "a"
+    must_contain_keys: [patients, total]
+    field_types:
+      patients: list
+      total: int
+    result_list_field: patients
+    item_must_contain_keys: [fname, lname, DOB, uuid]
+    must_not_error: true
+
+  - id: lookup_no_match
+    description: Nonsense search returns empty list, not error
+    args:
+      search_term: "Zzzznotaname99"
+    must_contain_keys: [patients, total]
+    field_types:
+      patients: list
+      total: int
+    expect_total_zero: true
+    must_not_error: true

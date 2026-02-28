@@ -1,0 +1,40 @@
+# Golden set: drug_interaction_check tool
+tool: drug_interaction_check
+
+cases:
+  - id: interaction_known_pair
+    description: Warfarin + aspirin returns known high-severity interaction
+    args:
+      medications: ["warfarin", "aspirin"]
+    must_contain_keys: [interactions, interaction_count, checked_drug_count]
+    field_types:
+      interactions: list
+      interaction_count: int
+      checked_drug_count: int
+    result_list_field: interactions
+    item_must_contain_keys: [severity, description, drugs]
+    expect_list_nonempty: true
+    must_not_error: true
+
+  - id: interaction_single_drug
+    description: Single drug returns helpful message, not error
+    args:
+      medications: ["metformin"]
+    must_contain_keys: [interactions, message]
+    field_types:
+      interactions: list
+    expect_empty_list_field: interactions
+    must_contain_substring:
+      message: "at least 2"
+    must_not_error: true
+
+  - id: interaction_unknown_drug
+    description: Nonsense drug name flagged as unresolved
+    args:
+      medications: ["warfarin", "xyznotadrug123"]
+    must_contain_keys: [unresolved_drugs]
+    field_types:
+      unresolved_drugs: list
+    expect_list_contains:
+      unresolved_drugs: "xyznotadrug123"
+    must_not_error: true

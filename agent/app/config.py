@@ -25,10 +25,6 @@ class Settings(BaseSettings):
     port: int = 8080
     root_path: str = ""
 
-    @property
-    def demo_mode(self) -> bool:
-        return not self.openemr_client_id
-
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 
 
