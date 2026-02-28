@@ -55,9 +55,43 @@ def verify_interactions(messages: list) -> list[str]:
     return warnings
 
 
+def verify_allergy_conflicts(messages: list) -> list[str]:
+    """Scan tool results for allergy-drug conflicts and return warnings."""
+    warnings: list[str] = []
+
+    for msg in messages:
+        if not isinstance(msg, ToolMessage):
+            continue
+        if msg.name != "allergy_drug_cross_check":
+            continue
+
+        content = msg.artifact if hasattr(msg, "artifact") and msg.artifact else None
+        if content is None:
+            try:
+                import json
+                content = json.loads(msg.content) if isinstance(msg.content, str) else msg.content
+            except (json.JSONDecodeError, TypeError):
+                continue
+
+        if not isinstance(content, dict):
+            continue
+
+        if content.get("has_conflict"):
+            for conflict in content.get("conflicts", []):
+                allergy = conflict.get("allergy", "unknown")
+                drug = conflict.get("proposed_drug", "unknown")
+                reason = conflict.get("reason", "")
+                warnings.append(
+                    f"ALLERGY CONFLICT: {drug} vs allergy '{allergy}' — {reason}"
+                )
+
+    return warnings
+
+
 def verify_response(ai_message: AIMessage, all_messages: list) -> list[str]:
     """Run all verification checks on the agent's final response."""
     warnings = verify_interactions(all_messages)
+    warnings.extend(verify_allergy_conflicts(all_messages))
 
     # Check for unsourced clinical claims in the response
     response_text = ai_message.content if isinstance(ai_message.content, str) else ""
