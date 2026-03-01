@@ -23,9 +23,10 @@ async def patient_vitals(
     """
     try:
         # Get encounters for this patient (sorted by date desc by default)
-        encounters = await openemr_api(
+        enc_response = await openemr_api(
             "GET", f"/api/patient/{patient_uuid}/encounter"
         )
+        encounters = enc_response.get("data", []) if isinstance(enc_response, dict) else (enc_response or [])
         if not encounters:
             return {
                 "patient_uuid": patient_uuid,
@@ -39,9 +40,10 @@ async def patient_vitals(
             eid = enc.get("eid")
             if pid is None or eid is None:
                 continue
-            vitals_data = await openemr_api(
+            vitals_response = await openemr_api(
                 "GET", f"/api/patient/{pid}/encounter/{eid}/vital"
             )
+            vitals_data = vitals_response.get("data", []) if isinstance(vitals_response, dict) else (vitals_response or [])
             if vitals_data:
                 all_vitals.extend(vitals_data if isinstance(vitals_data, list) else [vitals_data])
                 break  # Found vitals, stop looking

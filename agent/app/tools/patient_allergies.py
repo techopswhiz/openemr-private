@@ -24,7 +24,7 @@ async def patient_allergy_list(
         data = await openemr_api(
             "GET", f"/api/patient/{patient_uuid}/allergy"
         )
-        allergies = data if data else []
+        allergies = data.get("data", []) if isinstance(data, dict) else (data or [])
         return {
             "patient_uuid": patient_uuid,
             "allergies": allergies,

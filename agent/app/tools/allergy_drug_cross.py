@@ -107,7 +107,7 @@ async def allergy_drug_cross_check(
         data = await openemr_api(
             "GET", f"/api/patient/{patient_uuid}/allergy"
         )
-        allergies = data if data else []
+        allergies = data.get("data", []) if isinstance(data, dict) else (data or [])
     except OpenEMRApiError as e:
         logger.error("Allergy cross-check failed for %s: %s", patient_uuid, e)
         return {

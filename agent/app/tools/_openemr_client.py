@@ -53,7 +53,16 @@ async def _get_access_token(force_refresh: bool = False) -> str:
                         "client_secret": settings.openemr_client_secret,
                         "username": settings.openemr_username,
                         "password": settings.openemr_password,
-                        "scope": "openid api:oemr api:fhir",
+                        "user_role": "users",
+                        "scope": (
+                            "openid api:oemr api:fhir "
+                            "user/patient.read user/patient.write "
+                            "user/allergy.read "
+                            "user/appointment.read "
+                            "user/medication.read "
+                            "user/medical_problem.read "
+                            "user/vital.read"
+                        ),
                     },
                 )
                 resp.raise_for_status()
