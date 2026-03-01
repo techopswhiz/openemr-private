@@ -1,12 +1,19 @@
-# AI-generated: Claude Code (claude.ai/code) — golden set eval runner
+# AI-generated: Claude Code (claude.ai/code) — tool contract tests
 """
-Stage 1 Gauntlet evals: deterministic binary checks against live OpenEMR.
-No LLM judges. Each case is pass/fail based on response shape and types.
+Tool contract tests: verify each tool returns the correct response shape,
+key presence, and types against a live OpenEMR instance.
+Skipped when OPENEMR_CLIENT_ID is not set.
 """
+import os
 import pathlib
 
 import pytest
 import yaml
+
+pytestmark = pytest.mark.skipif(
+    not os.environ.get("OPENEMR_CLIENT_ID"),
+    reason="OPENEMR_CLIENT_ID not set — skipping tool contract tests",
+)
 
 from app.tools.drug_interactions import drug_interaction_check
 from app.tools.patient_lookup import patient_lookup

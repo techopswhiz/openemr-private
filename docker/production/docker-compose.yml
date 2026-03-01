@@ -104,6 +104,8 @@ services:
       LANGCHAIN_API_KEY: ${LANGCHAIN_API_KEY:-}
       LANGCHAIN_TRACING_V2: "true"
       LANGCHAIN_PROJECT: openemr-agent
+    volumes:
+    - agentdata:/data
     depends_on:
       openemr:
         condition: service_healthy
@@ -113,3 +115,4 @@ volumes:
   databasevolume: {}
   certbot-webroot: {}
   certbot-certs: {}
+  agentdata: {}

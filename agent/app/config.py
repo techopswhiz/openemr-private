@@ -25,6 +25,9 @@ class Settings(BaseSettings):
     port: int = 8080
     root_path: str = ""
 
+    # Memory
+    memory_db_path: str = "/data/sessions.db"
+
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 
 

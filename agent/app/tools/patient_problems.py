@@ -1,7 +1,11 @@
 # AI-generated: Claude Code (claude.ai/code) — patient problem list tool
+import logging
+
 from langchain_core.tools import tool
 
-from app.tools._openemr_client import openemr_api
+from app.tools._openemr_client import OpenEMRApiError, openemr_api
+
+logger = logging.getLogger(__name__)
 
 
 @tool
@@ -16,12 +20,20 @@ async def patient_problem_list(
     Args:
         patient_uuid: The UUID of the patient (from patient_lookup results)
     """
-    data = await openemr_api(
-        "GET", f"/api/patient/{patient_uuid}/medical_problem"
-    )
-    problems = data if data else []
-    return {
-        "patient_uuid": patient_uuid,
-        "problems": problems,
-    }
+    try:
+        data = await openemr_api(
+            "GET", f"/api/patient/{patient_uuid}/medical_problem"
+        )
+        problems = data if data else []
+        return {
+            "patient_uuid": patient_uuid,
+            "problems": problems,
+        }
+    except OpenEMRApiError as e:
+        logger.error("Problem list failed for %s: %s", patient_uuid, e)
+        return {
+            "error": f"OpenEMR API error ({e.status_code}): {e.detail}",
+            "patient_uuid": patient_uuid,
+            "problems": [],
+        }
 # end AI-generated

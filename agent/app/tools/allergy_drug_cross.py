@@ -1,7 +1,11 @@
 # AI-generated: Claude Code (claude.ai/code) — allergy-drug cross-check tool
+import logging
+
 from langchain_core.tools import tool
 
-from app.tools._openemr_client import openemr_api
+from app.tools._openemr_client import OpenEMRApiError, openemr_api
+
+logger = logging.getLogger(__name__)
 
 # Drug-class mappings for cross-referencing allergies against proposed drugs.
 # Keys are allergy keywords (lowercased), values are lists of drug names in that class.
@@ -99,10 +103,21 @@ async def allergy_drug_cross_check(
         patient_uuid: The UUID of the patient (from patient_lookup results)
         proposed_drug: The drug name to check against allergies (e.g., "amoxicillin")
     """
-    data = await openemr_api(
-        "GET", f"/api/patient/{patient_uuid}/allergy"
-    )
-    allergies = data if data else []
+    try:
+        data = await openemr_api(
+            "GET", f"/api/patient/{patient_uuid}/allergy"
+        )
+        allergies = data if data else []
+    except OpenEMRApiError as e:
+        logger.error("Allergy cross-check failed for %s: %s", patient_uuid, e)
+        return {
+            "error": f"OpenEMR API error ({e.status_code}): {e.detail}",
+            "patient_uuid": patient_uuid,
+            "checked_drug": proposed_drug,
+            "has_conflict": False,
+            "conflicts": [],
+            "allergies_checked": 0,
+        }
 
     all_conflicts = []
     for allergy in allergies:
