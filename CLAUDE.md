@@ -334,6 +334,29 @@ Preserve existing authors/copyrights when editing files.
 - Legacy code in `/library/` is maintained but not extended - new code goes in `/src/`
 - Modules auto-disable after 3 failures
 
+## AgentForge Assignment
+
+The current project is an **AgentForge** assignment: build a production-ready
+domain-specific AI agent on top of OpenEMR. Full spec lives in
+`agent/docs/assignment.md`. Key deadlines and deliverables:
+
+| Deliverable | Status |
+|---|---|
+| Pre-Search document (`pre-search.md`) | ✅ Complete |
+| MVP (agent + 5 tools + deploy) | ✅ Complete (8 tools, deployed) |
+| 50+ eval test cases (20 happy, 10 edge, 10 adversarial, 10 multi-step) | 🔴 33 total, gaps in adversarial & happy path |
+| 3+ verification types | ✅ Met (domain constraints ×2, output validation ×1) |
+| Observability (trace, latency, tokens, errors, eval history, feedback) | 🟡 Partial — LangSmith traces + error logs only |
+| AI cost analysis (dev spend + projections at 100/1K/10K/100K users) | 🔴 Missing |
+| Architecture doc (1-2 pages, required format) | 🔴 Missing (planning report exists but wrong format) |
+| Open source contribution (publish package, dataset, PR, or docs) | 🔴 Missing |
+| Demo video (3-5 min) | 🔴 Missing |
+| Social post (X or LinkedIn) | 🔴 Missing |
+| Deployed application | ✅ Live at openemr.g4.techopswhiz.com |
+
+Agent code lives in `agent/` (Python/FastAPI/LangGraph). See `agent/docs/assignment.md`
+for the full rubric and `agent/docs/evals.pdf` for the Gauntlet eval framework reference.
+
 ## Key Documentation
 
 - `CONTRIBUTING.md` - Contributing guidelines
@@ -342,3 +365,4 @@ Preserve existing authors/copyrights when editing files.
 - `tests/Tests/README.md` - Testing guide
 - `pre-search.md` - Codebase orientation and key file reference
 - `AGENT_PLANNING_REPORT.md` - Agent architecture analysis and proposals
+- `agent/docs/assignment.md` - AgentForge assignment spec (primary reference)
