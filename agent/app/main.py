@@ -1,8 +1,9 @@
 # AI-generated: Claude Code (claude.ai/code) — FastAPI entry point
 import logging
+import time
 
 import httpx
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -10,6 +11,7 @@ from fastapi.staticfiles import StaticFiles
 from app.agent import run_agent
 from app.config import settings
 from app.memory import clear_history, cleanup_expired
+from app.metrics import get_eval_history, metrics
 from app.models import ChatRequest, ChatResponse, FeedbackRequest
 from app.tools._openemr_client import OpenEMRApiError
 
@@ -32,6 +34,18 @@ app.add_middleware(
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
+@app.middleware("http")
+async def timing_middleware(request: Request, call_next):
+    """Record request latency for every endpoint."""
+    start = time.perf_counter()
+    response = await call_next(request)
+    latency = time.perf_counter() - start
+    # Only record latency for API requests, skip static files
+    if not request.url.path.startswith("/static"):
+        metrics.record_request(latency)
+    return response
+
+
 @app.on_event("startup")
 async def startup_cleanup():
     """Clean up expired sessions on startup."""
@@ -52,24 +66,28 @@ async def chat(req: ChatRequest):
         return ChatResponse(**result)
     except OpenEMRApiError as e:
         logger.error("OpenEMR API error in chat: %s", e)
+        metrics.record_error("openemr_api", str(e))
         raise HTTPException(
             status_code=502,
             detail=f"OpenEMR service error: {e.detail}",
         )
     except httpx.TimeoutException:
         logger.error("External service timeout during chat")
+        metrics.record_error("timeout", "External service timeout")
         raise HTTPException(
             status_code=504,
             detail="Request timed out while contacting external services. Please try again.",
         )
     except httpx.ConnectError:
         logger.error("Cannot connect to external service during chat")
+        metrics.record_error("connection", "Cannot connect to external service")
         raise HTTPException(
             status_code=503,
             detail="Cannot connect to required services. Please check that OpenEMR is running.",
         )
     except Exception:
         logger.exception("Unexpected error in chat endpoint")
+        metrics.record_error("unexpected", "Unhandled exception in chat")
         raise HTTPException(
             status_code=500,
             detail="An unexpected error occurred. Please try again.",
@@ -91,6 +109,7 @@ async def submit_feedback(req: FeedbackRequest):
         return {"status": "ok", "run_id": req.run_id, "score": req.score}
     except Exception as e:
         logger.error("Failed to submit feedback to LangSmith: %s", e)
+        metrics.record_error("langsmith", str(e))
         raise HTTPException(status_code=502, detail="Failed to record feedback")
 
 
@@ -106,6 +125,18 @@ async def health():
         "status": "ok",
         "model": settings.xai_model,
     }
+
+
+@app.get("/metrics")
+async def get_metrics():
+    """Return agent performance metrics as JSON.
+
+    Includes request latency percentiles, LLM timing, tool call stats,
+    token usage, error breakdown, verification trigger counts, and eval history.
+    """
+    summary = metrics.get_summary()
+    summary["eval_history"] = get_eval_history(limit=10)
+    return summary
 
 
 def start():

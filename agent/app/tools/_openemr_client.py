@@ -6,6 +6,7 @@ import time
 import httpx
 
 from app.config import settings
+from app.metrics import metrics
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +62,8 @@ async def _get_access_token(force_refresh: bool = False) -> str:
                             "user/appointment.read "
                             "user/medication.read "
                             "user/medical_problem.read "
-                            "user/vital.read"
+                            "user/vital.read "
+                            "user/encounter.read"
                         ),
                     },
                 )
@@ -100,6 +102,7 @@ async def openemr_api(
     for attempt in range(MAX_RETRIES):
         token = await _get_access_token()
         try:
+            api_start = time.perf_counter()
             async with httpx.AsyncClient(timeout=20, verify=False) as client:
                 resp = await client.request(
                     method,
@@ -107,6 +110,11 @@ async def openemr_api(
                     params=params,
                     json=json,
                     headers={"Authorization": f"Bearer {token}"},
+                )
+                api_latency = time.perf_counter() - api_start
+                metrics.record_tool_call(
+                    f"openemr_api:{path}", api_latency,
+                    success=resp.status_code < 400,
                 )
 
                 if resp.status_code == 401:

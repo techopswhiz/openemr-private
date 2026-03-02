@@ -1,8 +1,20 @@
 [project]
 name = "openemr-agent"
 version = "0.1.0"
-description = "Healthcare AI agent sidecar for OpenEMR"
+description = "Healthcare AI agent sidecar for OpenEMR — clinical decision support with drug interaction checking, patient data retrieval, and safety verification"
+readme = "README.md"
+license = {text = "GPL-3.0-or-later"}
 requires-python = ">=3.11"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Healthcare Industry",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Medical Science Apps.",
+    "Framework :: FastAPI",
+]
 dependencies = [
     "fastapi>=0.115.0",
     "uvicorn[standard]>=0.32.0",
@@ -13,6 +25,11 @@ dependencies = [
     "pydantic-settings>=2.0.0",
     "python-dotenv>=1.0.0",
 ]
+
+[project.urls]
+Homepage = "https://www.open-emr.org"
+Repository = "https://github.com/openemr/openemr"
+Documentation = "https://github.com/openemr/openemr/tree/master/agent/docs"
 
 [project.optional-dependencies]
 dev = [

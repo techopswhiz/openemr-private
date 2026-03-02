@@ -1,5 +1,6 @@
 # AI-generated: Claude Code (claude.ai/code) — LangGraph agent definition
 import json
+import time
 from typing import Annotated, TypedDict
 
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
@@ -10,6 +11,7 @@ from langgraph.prebuilt import ToolNode, tools_condition
 
 from app.config import settings
 from app.memory import get_history, save_history
+from app.metrics import metrics
 from app.models import Citation, Finding, ReasoningStep, StructuredResponse
 from app.tools import all_tools
 from app.verification import verify_response
@@ -65,7 +67,19 @@ def _build_llm():
 def agent_node(state: AgentState) -> dict:
     """Call the LLM with tools bound."""
     llm = _build_llm().bind_tools(all_tools)
+    start = time.perf_counter()
     response = llm.invoke(state["messages"])
+    llm_latency = time.perf_counter() - start
+    metrics.record_llm_latency(llm_latency)
+
+    # Extract token usage from response metadata if available
+    usage = getattr(response, "usage_metadata", None)
+    if usage and isinstance(usage, dict):
+        metrics.record_token_usage(
+            tokens_in=usage.get("input_tokens", 0),
+            tokens_out=usage.get("output_tokens", 0),
+        )
+
     return {"messages": [response]}
 
 
@@ -76,6 +90,15 @@ def verification_node(state: AgentState) -> dict:
     warnings: list[str] = []
     if isinstance(last, AIMessage) and not last.tool_calls:
         warnings = verify_response(last, messages)
+
+    # Record verification results to metrics
+    has_interaction = any("HIGH SEVERITY" in w or "MODERATE" in w for w in warnings)
+    has_allergy = any("ALLERGY CONFLICT" in w for w in warnings)
+    has_scope = any("SCOPE WARNING" in w for w in warnings)
+    metrics.record_verification("interaction_severity", has_interaction)
+    metrics.record_verification("allergy_conflict", has_allergy)
+    metrics.record_verification("prescriptive_language", has_scope)
+
     return {"verification_warnings": warnings}
 
 
@@ -221,13 +244,34 @@ def should_continue(state: AgentState) -> str:
     return "tools"
 
 
-def build_graph() -> StateGraph:
-    tool_node = ToolNode(all_tools)
+_raw_tool_node = ToolNode(all_tools)
 
+
+def _timed_tool_node(state: AgentState) -> dict:
+    """Wrap ToolNode execution with per-tool timing for metrics."""
+    # Identify which tools are about to be called
+    last = state["messages"][-1]
+    tool_names = []
+    if isinstance(last, AIMessage) and last.tool_calls:
+        tool_names = [tc["name"] for tc in last.tool_calls]
+
+    start = time.perf_counter()
+    result = _raw_tool_node.invoke(state)
+    total_latency = time.perf_counter() - start
+
+    # Distribute latency evenly if multiple tools (approximation)
+    per_tool = total_latency / len(tool_names) if tool_names else total_latency
+    for name in tool_names:
+        metrics.record_tool_call(name, per_tool, success=True)
+
+    return result
+
+
+def build_graph() -> StateGraph:
     graph = StateGraph(AgentState)
     graph.add_node("agent", agent_node)
     graph.add_node("log_calls", log_tool_calls)
-    graph.add_node("tools", tool_node)
+    graph.add_node("tools", _timed_tool_node)
     graph.add_node("verify", verification_node)
     graph.add_node("format", format_node)
 
