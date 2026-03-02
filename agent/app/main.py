@@ -10,7 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from app.agent import run_agent
 from app.config import settings
 from app.memory import clear_history, cleanup_expired
-from app.models import ChatRequest, ChatResponse
+from app.models import ChatRequest, ChatResponse, FeedbackRequest
 from app.tools._openemr_client import OpenEMRApiError
 
 logger = logging.getLogger(__name__)
@@ -74,6 +74,24 @@ async def chat(req: ChatRequest):
             status_code=500,
             detail="An unexpected error occurred. Please try again.",
         )
+
+
+@app.post("/feedback")
+async def submit_feedback(req: FeedbackRequest):
+    """Record user feedback (thumbs up/down) for a chat response in LangSmith."""
+    try:
+        from langsmith import Client
+        client = Client()
+        client.create_feedback(
+            run_id=req.run_id,
+            key="user_score",
+            score=req.score,
+            comment=req.comment if req.comment else None,
+        )
+        return {"status": "ok", "run_id": req.run_id, "score": req.score}
+    except Exception as e:
+        logger.error("Failed to submit feedback to LangSmith: %s", e)
+        raise HTTPException(status_code=502, detail="Failed to record feedback")
 
 
 @app.post("/chat/{session_id}/clear")

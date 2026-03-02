@@ -17,6 +17,10 @@
   .msg.assistant { background: #fff; color: #1a1a1a; align-self: flex-start; border-bottom-left-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
   .msg.assistant .warnings { background: #fef3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 8px 12px; margin-top: 8px; font-size: 13px; color: #664d03; }
   .msg.assistant .tool-calls { color: #666; font-size: 12px; margin-top: 8px; }
+  .msg.assistant .feedback { margin-top: 8px; display: flex; gap: 8px; }
+  .msg.assistant .feedback button { background: none; border: 1px solid #ccc; border-radius: 6px; padding: 4px 10px; cursor: pointer; font-size: 16px; }
+  .msg.assistant .feedback button:hover { background: #f0f0f0; }
+  .msg.assistant .feedback button.selected { border-color: #1a5276; background: #e8f0fe; }
   #input-area { padding: 16px 24px; background: #fff; border-top: 1px solid #ddd; display: flex; gap: 12px; }
   #input-area input { flex: 1; padding: 12px 16px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; outline: none; }
   #input-area input:focus { border-color: #1a5276; }
@@ -73,6 +77,31 @@ function addMsg(role, text, extras) {
     t.textContent = 'Tools used: ' + extras.tools.map(tc => tc.tool).join(', ');
     div.appendChild(t);
   }
+  if (role === 'assistant' && extras?.run_id) {
+    const fb = document.createElement('div');
+    fb.className = 'feedback';
+    const up = document.createElement('button');
+    up.textContent = '👍';
+    up.title = 'Helpful';
+    const down = document.createElement('button');
+    down.textContent = '👎';
+    down.title = 'Not helpful';
+    const handler = (score, btn, other) => async () => {
+      btn.classList.add('selected');
+      other.disabled = true;
+      btn.disabled = true;
+      await fetch(base + '/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ run_id: extras.run_id, score }),
+      });
+    };
+    up.onclick = handler(1, up, down);
+    down.onclick = handler(0, down, up);
+    fb.appendChild(up);
+    fb.appendChild(down);
+    div.appendChild(fb);
+  }
   chatEl.appendChild(div);
   chatEl.scrollTop = chatEl.scrollHeight;
 }
@@ -102,6 +131,7 @@ async function send() {
     addMsg('assistant', data.response, {
       warnings: data.verification_warnings,
       tools: data.tool_calls,
+      run_id: data.run_id,
     });
   } catch (err) {
     typing.remove();

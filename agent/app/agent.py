@@ -250,12 +250,18 @@ async def run_agent(message: str, session_id: str = "default") -> dict:
     history = get_history(session_id)
     messages = [SystemMessage(content=SYSTEM_PROMPT)] + history + [HumanMessage(content=message)]
 
-    result = await agent_graph.ainvoke({
-        "messages": messages,
-        "verification_warnings": [],
-        "tool_calls_log": [],
-        "structured": None,
-    })
+    import uuid as _uuid
+    run_id = str(_uuid.uuid4())
+
+    result = await agent_graph.ainvoke(
+        {
+            "messages": messages,
+            "verification_warnings": [],
+            "tool_calls_log": [],
+            "structured": None,
+        },
+        config={"run_id": run_id},
+    )
 
     # Save updated history (skip system prompt)
     save_history(session_id, result["messages"][1:])
@@ -270,5 +276,6 @@ async def run_agent(message: str, session_id: str = "default") -> dict:
         "session_id": session_id,
         "tool_calls": result.get("tool_calls_log", []),
         "verification_warnings": result.get("verification_warnings", []),
+        "run_id": run_id,
     }
 # end AI-generated

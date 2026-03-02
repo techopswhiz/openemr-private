@@ -41,4 +41,11 @@ class ChatResponse(BaseModel):
     session_id: str
     tool_calls: list[dict] = []
     verification_warnings: list[str] = []
+    run_id: str = ""
+
+
+class FeedbackRequest(BaseModel):
+    run_id: str = Field(description="The LangSmith run ID from the chat response")
+    score: int = Field(description="1 for thumbs up, 0 for thumbs down", ge=0, le=1)
+    comment: str = Field(default="", description="Optional user comment")
 # end AI-generated
