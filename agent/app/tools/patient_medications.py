@@ -25,6 +25,16 @@ async def patient_medication_list(
             "GET", f"/api/patient/{patient_uuid}/medication"
         )
         meds = data.get("data", []) if isinstance(data, dict) else (data or [])
+
+        # Some OpenEMR versions need integer pid for this endpoint
+        if not meds and data is None:
+            pid = await _resolve_pid(patient_uuid)
+            if pid:
+                data = await openemr_api(
+                    "GET", f"/api/patient/{pid}/medication"
+                )
+                meds = data.get("data", []) if isinstance(data, dict) else (data or [])
+
         return {
             "patient_uuid": patient_uuid,
             "medications": meds,
@@ -38,4 +48,18 @@ async def patient_medication_list(
             "medications": [],
             "active_count": 0,
         }
+
+
+async def _resolve_pid(patient_uuid: str) -> int | None:
+    """Look up the integer pid for a patient UUID."""
+    try:
+        data = await openemr_api("GET", f"/api/patient/{patient_uuid}")
+        if isinstance(data, dict):
+            patient = data.get("data", data)
+            if isinstance(patient, list) and patient:
+                return patient[0].get("id") or patient[0].get("pid")
+            return patient.get("id") or patient.get("pid")
+    except OpenEMRApiError:
+        pass
+    return None
 # end AI-generated
