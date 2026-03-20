@@ -34,3 +34,7 @@ coverage/js-unit
 
 # phpstan
 tmp-phpstan/*
+
+# Local settings
+.claude/
+agent/dist/
